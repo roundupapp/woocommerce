@@ -30,7 +30,7 @@ if (!is_plugin_active('woocommerce/woocommerce.php')) {
 
 final class RoundUpPlugin {
 
-    protected $sku = 'rua-53196';
+    protected $sku = 'RoundUp-donation';
 
     public function __construct() {
         add_action('activated_plugin', [$this, 'activated']);
@@ -38,6 +38,8 @@ final class RoundUpPlugin {
         if (is_admin()) {
             add_filter('woocommerce_get_sections_advanced', [$this, 'add_roundup_section']);
             add_filter('woocommerce_get_settings_advanced', [$this, 'roundup_settings'], 10, 2);
+            add_filter('plugin_action_links_'.plugin_basename(__FILE__), [$this, 'settings_link' ]);
+            add_action('woocommerce_settings_save_advanced', [ $this, 'settings_save' ], 10, 1); 
         }
 
         $this->define_admin_hooks();
@@ -76,6 +78,13 @@ final class RoundUpPlugin {
         add_filter('woocommerce_is_rest_api_request', [ $this, 'simulate_as_not_rest' ]);
     }
 
+    public function settings_link($links) {
+        $links[] = '<a href="' .
+            admin_url('admin.php?page=wc-settings&tab=advanced&section=roundupapp') .
+            '">' . __('Settings') . '</a>';
+        return $links;
+    }
+
     public function add_roundup_section($sections) {
         $sections['roundupapp'] = __('RoundUp App', 'roundupapp');
 	    return $sections;
@@ -95,6 +104,11 @@ final class RoundUpPlugin {
                     'title' => __('API Key', 'roundupapp')
                 ],
                 [
+                    'id'    => 'roundup_merchant_id',
+                    'type'  => 'text',
+                    'title' => __('Merchant ID', 'roundupapp')
+                ],
+                [
                     'type'  => 'sectionend',
                     'id'    => 'roundup_settings_section',
                 ]
@@ -103,6 +117,17 @@ final class RoundUpPlugin {
         else {
             return $settings;
         }
+    }
+
+    public function settings_save($array) {
+        // Could be used to fetch merchant?
+
+        // $key = get_option('roundup_api_key');
+        // $body = wp_remote_get('https://enu07tiy5bf3.x.pipedream.net/', [ 
+        //     'headers' => [
+        //         'Authorization' => 'Bearer '. $key
+        //     ]
+        // ]);
     }
 
     private function add_product() {
@@ -185,7 +210,7 @@ final class RoundUpPlugin {
     }
 
     public function checkout_shipping() {
-        $key = get_option('roundup_api_key');
+        $key = get_option('roundup_merchant_id');
         echo '<roundup-at-checkout id="'.$key.'"></roundup-at-checkout>';
     }
 
@@ -194,7 +219,7 @@ final class RoundUpPlugin {
         $roundup = ceil($total) - $total;
         $enabled = false;
         foreach (WC()->cart->get_cart() as $cart_item_key => $cart_item) {
-            if (strpos($cart_item['data']->sku, 'rua') !== false) {
+            if (strpos($cart_item['data']->sku, 'roundup') !== false) {
                 $roundup = $cart_item['line_total'];
             }
         }
