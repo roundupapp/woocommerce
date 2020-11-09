@@ -56,6 +56,21 @@ final class RoundUpPlugin {
 
     public function define_public_hooks() {
         add_action('wp_enqueue_scripts', [$this, 'enqueue_styles_and_scripts']);
+        add_action('rest_api_init', function () {
+            register_rest_route('roundup/v1', '/total', array(
+                'methods' => 'GET',
+                'callback' => [$this, 'get_totals']
+            ));
+            register_rest_route('roundup/v1', '/remove', array(
+                'methods' => 'POST',
+                'callback' => [$this, 'remove_roundup']
+            ));
+            register_rest_route('roundup/v1', '/add', array(
+                'methods' => 'POST',
+                'callback' => [$this, 'add_roundup']
+            ));
+        });
+        add_filter('woocommerce_is_rest_api_request', [ $this, 'simulate_as_not_rest' ]);
     }
 
     public function add_roundup_section($sections) {
@@ -140,7 +155,7 @@ final class RoundUpPlugin {
             update_post_meta($variation_id, '_virtual', 'yes');
             update_post_meta($variation_id, '_sku', $this->sku .'-'.$i);
         }
-    }
+    } 
 
     private function add_webhook() {
 
@@ -168,16 +183,65 @@ final class RoundUpPlugin {
 
     public function checkout_shipping() {
         $key = get_option('roundup_api_key');
+        echo '<roundup-at-checkout id="'.$key.'"></roundup-at-checkout>';
+    }
+
+    public function get_totals() {
+        $total = floatval(WC()->cart->total);
+        $roundup = ceil($total) - $total;
+        $enabled = false;
+        foreach (WC()->cart->get_cart() as $cart_item_key => $cart_item) {
+            if (strpos($cart_item['data']->sku, 'rua') !== false) {
+                $roundup = $cart_item['line_total'];
+            }
+        }
+        echo json_encode([
+            'total' => $total,
+            'roundup' => $roundup,
+            'enabled' => $enabled
+        ]);
+    }
+
+    public function add_roundup() {
+        $total = WC()->cart->total;
 
         $id = wc_get_product_id_by_sku($this->sku);
         $product = wc_get_product($id);
 
-        echo '<roundup-at-checkout id="'.$key.'" product="'.$product->id.'"></roundup-at-checkout>';
+        $amount = ceil($total) - $total;
+
+        $variations = $product->get_available_variations();
+        foreach ($variations as $variation) {
+            if (strval($variation['display_price']) == strval($amount)) {
+                WC()->cart->add_to_cart($id, 1, $variation['variation_id']);
+            }
+        }
+    }
+
+    public function remove_roundup() {
+        foreach (WC()->cart->get_cart() as $cart_item_key => $cart_item) {
+            if (strpos($cart_item['data']->sku, 'rua') !== false) {
+                WC()->cart->remove_cart_item($cart_item_key);
+            }
+        }
     }
 
     public function enqueue_styles_and_scripts() {
-        wp_enqueue_style('style', 'https://s3.amazonaws.com/bigcommerce.embed.roundupapp.com/css/bc-roundup-embed.css');
-        wp_enqueue_script('script', 'https://s3.amazonaws.com/bigcommerce.embed.roundupapp.com/js/bc-roundup-embed.js');
+        wp_enqueue_style('style', 'https://s3.amazonaws.com/bigcommerce.embed.roundupapp.com/woo/css/wc-roundup-embed.css');
+        wp_enqueue_script('script', 'https://s3.amazonaws.com/bigcommerce.embed.roundupapp.com/woo/js/wc-roundup-embed.js');
+    }
+
+    public function simulate_as_not_rest($is_rest_api_request) {
+        if (empty($_SERVER['REQUEST_URI'])) {
+            return $is_rest_api_request;
+        }
+
+        // Bail early if this is not our request.
+        if (strpos($_SERVER['REQUEST_URI'], 'roundup') === false) {
+            return $is_rest_api_request;
+        }
+
+        return false;
     }
 }
 
