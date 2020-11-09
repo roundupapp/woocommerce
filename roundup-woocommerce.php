@@ -59,15 +59,18 @@ final class RoundUpPlugin {
         add_action('rest_api_init', function () {
             register_rest_route('roundup/v1', '/total', array(
                 'methods' => 'GET',
-                'callback' => [$this, 'get_totals']
+                'callback' => [$this, 'get_totals'],
+                'permission_callback' => '__return_true'
             ));
             register_rest_route('roundup/v1', '/remove', array(
                 'methods' => 'POST',
-                'callback' => [$this, 'remove_roundup']
+                'callback' => [$this, 'remove_roundup'],
+                'permission_callback' => '__return_true'
             ));
             register_rest_route('roundup/v1', '/add', array(
                 'methods' => 'POST',
-                'callback' => [$this, 'add_roundup']
+                'callback' => [$this, 'add_roundup'],
+                'permission_callback' => '__return_true'
             ));
         });
         add_filter('woocommerce_is_rest_api_request', [ $this, 'simulate_as_not_rest' ]);
