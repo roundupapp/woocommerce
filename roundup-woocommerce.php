@@ -34,6 +34,7 @@ final class RoundUpPlugin {
 
     public function __construct() {
         add_action('activated_plugin', [$this, 'activated']);
+        add_action('deactivated_plugin', [$this, 'deactivated']);
         
         if (is_admin()) {
             add_filter('woocommerce_get_sections_advanced', [$this, 'add_roundup_section']);
@@ -49,6 +50,11 @@ final class RoundUpPlugin {
     public function activated() {
         $this->add_product();
         $this->add_webhook();
+    }
+
+    public function deactivated() {
+        $this->remove_webhook();
+        $this->remove_product();
     }
 
     public function define_admin_hooks() {
@@ -159,6 +165,7 @@ final class RoundUpPlugin {
         $attributes_array[$attr_slug] = array(
             'name' => $attr,
             'value' => join(" | ", range(1, 99)),
+            'position' => '0',
             'is_visible' => '1',
             'is_variation' => '1',
             'is_taxonomy' => '0'
@@ -183,15 +190,38 @@ final class RoundUpPlugin {
             update_post_meta($variation_id, '_virtual', 'yes');
             update_post_meta($variation_id, '_sku', $this->sku .'-'.$i);
         }
-    } 
+        WC_Product_Variable::sync($post_id);
+    }
 
-    private function add_webhook() {
+    private function remove_product() {
+        $id = wc_get_product_id_by_sku($this->sku);
+        $product = wc_get_product($id);
 
+        if (empty($product)) return;
+
+        foreach ($product->get_children() as $child_id) {
+            $child = wc_get_product($child_id);
+            $child->delete(true);
+        }
+
+        $product->delete(true);
+        $result = $product->get_id() > 0 ? false : true;
+
+        if ($parent_id = wp_get_post_parent_id($id)) {
+            wc_delete_product_transients($parent_id);
+        }
+    }
+
+    private function require_woocommerce() {
         require_once __DIR__ . '/../woocommerce/includes/abstracts/abstract-wc-data.php';
         require_once __DIR__ . '/../woocommerce/includes/class-wc-data-store.php';
         require_once __DIR__ . '/../woocommerce/includes/interfaces/class-wc-webhooks-data-store-interface.php';
         require_once __DIR__ . '/../woocommerce/includes/data-stores/class-wc-webhook-data-store.php';
         require_once __DIR__ . '/../woocommerce/includes/class-wc-webhook.php';
+    }
+
+    private function add_webhook() {
+        $this->require_woocommerce();
         
         $webhook = new WC_Webhook();
         $webhook->set_name('RoundUp Webhook');
@@ -202,6 +232,20 @@ final class RoundUpPlugin {
         $webhook->set_status('active');
         $save = $webhook->save();
         return $save;
+    }
+
+    protected function remove_webhook() {
+        $this->require_woocommerce();
+
+        global $wpdb;
+        $results = $wpdb->get_results( "SELECT webhook_id, delivery_url FROM {$wpdb->prefix}wc_webhooks" );
+        foreach($results as $result) {
+            if (strpos($result->delivery_url, 'roundupapp.com') !== false) {
+                $wh = new WC_Webhook();
+                $wh->set_id($result->webhook_id);
+                $wh->delete();
+            }
+        }
     }
 
     public function webhook_payload($payload) {
