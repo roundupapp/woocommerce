@@ -40,7 +40,6 @@ final class RoundUpPlugin {
             add_filter('woocommerce_get_sections_advanced', [$this, 'add_roundup_section']);
             add_filter('woocommerce_get_settings_advanced', [$this, 'roundup_settings'], 10, 2);
             add_filter('plugin_action_links_'.plugin_basename(__FILE__), [$this, 'settings_link' ]);
-            add_action('woocommerce_settings_save_advanced', [ $this, 'settings_save' ], 10, 1); 
         }
 
         $this->define_admin_hooks();
@@ -123,17 +122,6 @@ final class RoundUpPlugin {
         else {
             return $settings;
         }
-    }
-
-    public function settings_save($array) {
-        // Could be used to fetch merchant?
-
-        // $key = get_option('roundup_api_key');
-        // $body = wp_remote_get('https://enu07tiy5bf3.x.pipedream.net/', [ 
-        //     'headers' => [
-        //         'Authorization' => 'Bearer '. $key
-        //     ]
-        // ]);
     }
 
     private function add_product() {
@@ -228,7 +216,7 @@ final class RoundUpPlugin {
         $webhook->set_user_id(get_current_user_id());
         $webhook->set_topic('order.created');
         $webhook->set_secret('roundupapp');
-        $webhook->set_delivery_url('https://enu07tiy5bf3.x.pipedream.net');
+        $webhook->set_delivery_url('https://api.roundupapp.com/merchants/woocommerce/webhook');
         $webhook->set_status('active');
         $save = $webhook->save();
         return $save;
@@ -299,8 +287,8 @@ final class RoundUpPlugin {
     }
 
     public function enqueue_styles_and_scripts() {
-        wp_enqueue_style('style', 'https://s3.amazonaws.com/bigcommerce.embed.roundupapp.com/woo/css/wc-roundup-embed.css');
-        wp_enqueue_script('script', 'https://s3.amazonaws.com/bigcommerce.embed.roundupapp.com/woo/js/wc-roundup-embed.js');
+        wp_enqueue_style('style', 'https://s3.amazonaws.com/embed.roundupapp.com/woocommerce/css/wc-roundup-embed.css');
+        wp_enqueue_script('script', 'https://s3.amazonaws.com/embed.roundupapp.com/woocommerce/js/wc-roundup-embed.js');
     }
 
     public function simulate_as_not_rest($is_rest_api_request) {
