@@ -243,7 +243,9 @@ final class RoundUpPlugin {
 
     public function checkout_shipping() {
         $key = get_option('roundup_public_key');
-        echo '<roundup-at-checkout key="'.$key.'"></roundup-at-checkout>';
+        if ($key) {
+            echo '<roundup-at-checkout key="'.$key.'"></roundup-at-checkout>';
+        }
     }
 
     public function get_totals() {
