@@ -109,9 +109,9 @@ final class RoundUpPlugin {
                     'title' => __('API Key', 'roundupapp')
                 ],
                 [
-                    'id'    => 'roundup_merchant_id',
+                    'id'    => 'roundup_public_key',
                     'type'  => 'text',
-                    'title' => __('Merchant ID', 'roundupapp')
+                    'title' => __('Public Key', 'roundupapp')
                 ],
                 [
                     'type'  => 'sectionend',
@@ -242,8 +242,8 @@ final class RoundUpPlugin {
     }
 
     public function checkout_shipping() {
-        $key = get_option('roundup_merchant_id');
-        echo '<roundup-at-checkout id="'.$key.'"></roundup-at-checkout>';
+        $key = get_option('roundup_public_key');
+        echo '<roundup-at-checkout key="'.$key.'"></roundup-at-checkout>';
     }
 
     public function get_totals() {
