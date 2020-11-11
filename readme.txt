@@ -19,7 +19,3 @@ This plugin allows for you to link your RoundUp App merchant account with your W
 
 = 1.0.0 =
 * First Release
-* Add new checkout fields.
-* Edit checkout fields.
-* Remove checkout fields.
-* Change the display order of checkout fields.
