@@ -5,8 +5,8 @@
 * @since 1.0.0
 * @package RoundUp App for WooCommerce
 * Plugin Name: RoundUp App for WooCommerce
-* Plugin URI: https://roundupapp.com/
-* Description: Adding products programmatically to WooCommerce
+* Plugin URI: https://github.com/roundupapp/woocommerce/
+* Description: Link your RoundUp merchant account to WooCommerce to allow your customers to round up their change.
 * Name: RoundUp App
 * Version: 1.0.0
 * Author: RoundUp App
