@@ -7,6 +7,7 @@ Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
+
 RoundUp App for WooCommerce - Allow customers to donate their change from every order.
 
 == Description ==
@@ -17,10 +18,8 @@ This plugin allows for you to link your RoundUp App merchant account with your W
 == Changelog ==
 
 = 1.0.1 =
-
-- Patch to handle the public API key
-- Improve onboarding
+* Patch to handle the public API key
+* Improve onboarding
 
 = 1.0.0 =
-
-- First Release
+* First Release
