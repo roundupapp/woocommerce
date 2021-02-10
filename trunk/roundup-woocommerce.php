@@ -2,13 +2,13 @@
 
 /**
 * @link https://roundupapp.com/
-* @since 1.0.0
+* @since 1.0.1
 * @package RoundUp App for WooCommerce
 * Plugin Name: RoundUp App for WooCommerce
 * Plugin URI: https://github.com/roundupapp/woocommerce/
 * Description: Link your RoundUp merchant account to WooCommerce to allow your customers to round up their change.
 * Name: RoundUp App
-* Version: 1.0.0
+* Version: 1.0.1
 * Author: RoundUp App
 * Author URI: https://roundupapp.com/
 */
@@ -265,26 +265,38 @@ final class RoundUpPlugin {
     }
 
     public function add_roundup() {
-        $total = WC()->cart->total;
+        try {
+            $total = WC()->cart->total;
 
-        $id = wc_get_product_id_by_sku($this->sku);
-        $product = wc_get_product($id);
+            $id = wc_get_product_id_by_sku($this->sku);
+            $product = wc_get_product($id);
 
-        $amount = ceil($total) - $total;
+            $amount = ceil($total) - $total;
 
-        $variations = $product->get_available_variations();
-        foreach ($variations as $variation) {
-            if (strval($variation['display_price']) == strval($amount)) {
-                WC()->cart->add_to_cart($id, 1, $variation['variation_id']);
+            $variations = $product->get_available_variations();
+            foreach ($variations as $variation) {
+                if (strval($variation['display_price']) == strval($amount)) {
+                    WC()->cart->add_to_cart($id, 1, $variation['variation_id']);
+                }
             }
+            wp_send_json_success([ 'total' => $amount ]);
+        }
+        catch (Exception $e) {
+            wp_send_json_error([ 'message' => $e->getMessage() ]);
         }
     }
 
     public function remove_roundup() {
-        foreach (WC()->cart->get_cart() as $cart_item_key => $cart_item) {
-            if (strpos($cart_item['data']->sku, 'rua') !== false) {
-                WC()->cart->remove_cart_item($cart_item_key);
+        try {
+            foreach (WC()->cart->get_cart() as $cart_item_key => $cart_item) {
+                if (strpos($cart_item['data']->sku, 'RoundUp') !== false) {
+                    WC()->cart->remove_cart_item($cart_item_key);
+                }
             }
+            wp_send_json_success();
+        }
+        catch (Exception $e) {
+            wp_send_json_error([ 'message' => $e->getMessage() ]);
         }
     }
 
