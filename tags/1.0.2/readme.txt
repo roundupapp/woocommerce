@@ -1,7 +1,7 @@
 === RoundUp App for WooCommerce ===
 Tags: Woocommerce, roundup, donate, change, roundup Woocommerce, donate purchase
 Requires at least: 4.9
-Tested up to: 5.5
+Tested up to: 5.8
 Requires PHP: 7.0
 Stable tag: 1.0.2
 License: GPLv2 or later
